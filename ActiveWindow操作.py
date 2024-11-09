@@ -21,11 +21,19 @@ class WindowSelector(wx.Frame):
             self.Close()
             return
 
-        self.listbox = wx.ListBox(self.panel, choices=self.windows, style=wx.LB_SINGLE)
-        self.listbox.Bind(wx.EVT_LISTBOX_DCLICK, self.on_select)
+        self.list_ctrl = wx.ListCtrl(self.panel, style=wx.LC_REPORT)
+        self.list_ctrl.InsertColumn(0, 'ファイル名', width=200)
+        self.list_ctrl.InsertColumn(1, 'アプリケーション名', width=200)
+
+        for window_title in self.windows:
+            file_name, app_name = self.split_title(window_title)
+            index = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), file_name)
+            self.list_ctrl.SetItem(index, 1, app_name)
+
+        self.list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.on_select)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.listbox, 1, wx.EXPAND | wx.ALL, 10)
+        sizer.Add(self.list_ctrl, 1, wx.EXPAND | wx.ALL, 10)
         self.panel.SetSizer(sizer)
 
         self.load_config()
@@ -39,6 +47,13 @@ class WindowSelector(wx.Frame):
         # ウィンドウが非アクティブになったときのイベントをバインド
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
 
+    def split_title(self, title):
+        # タイトルをファイル名とアプリケーション名に分割
+        parts = title.split(' - ')
+        if len(parts) > 1:
+            return parts[0], parts[-1]
+        return title, ''
+
     def on_select(self, event):
         self.activate_selected_window()
 
@@ -49,12 +64,14 @@ class WindowSelector(wx.Frame):
             event.Skip()  # 他のキーイベントを処理するためにスキップ
 
     def activate_selected_window(self):
-        selected_title = self.listbox.GetStringSelection()
-        window = gw.getWindowsWithTitle(selected_title)
-        if window:
-            if window[0].isMinimized:
-                window[0].maximize()  # ウィンドウが最小化されている場合は最大化
-            window[0].activate()
+        selected_index = self.list_ctrl.GetFirstSelected()
+        if selected_index != -1:
+            selected_title = self.windows[selected_index]
+            window = gw.getWindowsWithTitle(selected_title)
+            if window:
+                if window[0].isMinimized:
+                    window[0].maximize()  # ウィンドウが最小化されている場合は最大化
+                window[0].activate()
         self.Close()  # アプリケーションを終了
 
     def load_config(self):
