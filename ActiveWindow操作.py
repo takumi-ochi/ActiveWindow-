@@ -45,6 +45,8 @@ class WindowSelector(wx.Frame):
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
 
         self.sort_index = [2, 2]  # 各列のソートインデックスを初期値に設定
+        
+        self.active_filters = {0: set(), 1: set()}  # 各列のアクティブなフィルタを追跡
 
     def populate_list(self):
         self.list_ctrl.DeleteAllItems()
@@ -65,9 +67,49 @@ class WindowSelector(wx.Frame):
 
     def on_col_click(self, event):
         col = event.GetColumn()
-        # ソート処理を行う前に、現在のソート状態を確認し、次のソート状態を決定
-        self.manager.sort_list(self.window_data, col, self.original_data)
-        self.SetTitle(f'ウィンドウ選択 - {self.manager.sort_criteria}')
+        self.show_filter_menu(col)
+
+    def show_filter_menu(self, col):
+        menu = wx.Menu()
+        unique_items = set(str(item[col]) for item in self.original_data)
+
+        for item in unique_items:
+            if item:
+                menu_item = menu.AppendCheckItem(wx.Window.NewControlId(), item)
+                # 現在のフィルタリング状態に基づいてチェックを設定
+                if item in self.active_filters[col]:
+                    menu.Check(menu_item.GetId(), True)
+                self.Bind(wx.EVT_MENU, lambda evt, item=item: self.toggle_filter(col, item), menu_item)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+    def toggle_filter(self, col, filter_value):
+        # フィルタをトグル
+        if filter_value in self.active_filters[col]:
+            self.active_filters[col].remove(filter_value)
+        else:
+            self.active_filters[col].add(filter_value)
+
+        # フィルタリングを適用
+        self.apply_filters()
+
+    def apply_filters(self):
+        # アクティブなフィルタに基づいてデータをフィルタリング
+        self.window_data = [
+            item for item in self.original_data
+            if (not self.active_filters[0] or item[0] in self.active_filters[0]) and
+            (not self.active_filters[1] or item[1] in self.active_filters[1])
+        ]
+        self.populate_list()
+
+    def filter_list(self, col, filter_value):
+        # original_dataを使用してフィルタリング
+        self.window_data = [item for item in self.original_data if item[col] == filter_value]
+        self.populate_list()
+
+    def filter_list(self, col, filter_value):
+        self.window_data = [item for item in self.original_data if item[col] == filter_value]
         self.populate_list()
 
     def on_col_right_click(self, event):
