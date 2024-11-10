@@ -78,6 +78,7 @@
   ('asyncio.windows_utils',
    'C:\\Python312\\Lib\\asyncio\\windows_utils.py',
    'PYMODULE'),
+  ('back', 'C:\\Cochi\\python\\ActiveWindowController\\back.py', 'PYMODULE'),
   ('base64', 'C:\\Python312\\Lib\\base64.py', 'PYMODULE'),
   ('bdb', 'C:\\Python312\\Lib\\bdb.py', 'PYMODULE'),
   ('bisect', 'C:\\Python312\\Lib\\bisect.py', 'PYMODULE'),
